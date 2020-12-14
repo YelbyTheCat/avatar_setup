@@ -6,4 +6,6 @@
 - Gives suggested eye position (Given specific bone path exists)
 - Creates a scene with the character inside
 - Works on avatar 2.0 and 3.0
+- Adds Avatar Descriptor
+- Checks for SDK 2 or 3
 - And more!
