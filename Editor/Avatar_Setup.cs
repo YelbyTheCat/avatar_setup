@@ -5,16 +5,21 @@ using UnityEditor.Presets;
 using UnityEditor.SceneManagement;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections;
+using System;
+using Object = UnityEngine.Object;
 
 public class Avatar_Setup : EditorWindow
 {
     //Attributes
     string myString = "";
-    public Object source;
+    string testString = "";
+    public UnityEngine.Object source;
     GameObject avatar;
     Scene scene;
-    bool showBtn = true;
-    bool av3 = true;
+    bool addFloor = true;
+    bool pullAnims = true;
+    string sdkV = "1";
     
     [MenuItem("Yelby/Avatar Setup")]
     public static void ShowWindow()
@@ -24,6 +29,9 @@ public class Avatar_Setup : EditorWindow
 
     void OnGUI()
     {
+        checkSDK();
+        GUILayout.Label("SDK Version: " + sdkV);
+
         //Starting Instruction
         GUILayout.Label("How to Use", EditorStyles.boldLabel);
         GUILayout.Label("1. Import your avatar into unity\n" +
@@ -33,6 +41,7 @@ public class Avatar_Setup : EditorWindow
 
         //Text Field
         myString = EditorGUILayout.TextField("Name of Avatar", myString);
+        testString = (myString + " bacon");
         
         //Object Field
         EditorGUILayout.BeginHorizontal();
@@ -41,8 +50,8 @@ public class Avatar_Setup : EditorWindow
         EditorGUILayout.EndHorizontal();
 
         //Checks
-        showBtn = EditorGUILayout.Toggle("Floor Plane", showBtn);
-        av3 = EditorGUILayout.Toggle("Is Avatar 3.0", av3);
+        addFloor = EditorGUILayout.Toggle("Floor Plane", addFloor);
+        pullAnims = EditorGUILayout.Toggle("Pull VRC Animations", pullAnims);
 
         //Button
         if (GUILayout.Button("Generate"))
@@ -73,14 +82,14 @@ public class Avatar_Setup : EditorWindow
 
                     Selection.activeGameObject = null;
                     //Floor
-                    if (showBtn)
+                    if (addFloor)
                     {
                         generateFloor();
                         Debug.Log("Floor Generated");
                     }
 
                     Debug.Log("Avatar Generated");
-                    EditorUtility.DisplayDialog("Avatar Success", "Avatar has finished generating!", "Ok");
+                    EditorUtility.DisplayDialog("Avatar Success", "Avatar has finished generating!\nCheck your 'Avatars' folder", "Ok");
                     source = null;
                 }
                 else
@@ -96,12 +105,17 @@ public class Avatar_Setup : EditorWindow
             }
 
         }
+        /*if(GUILayout.Button("Find Comps"))
+        {
+            checkComps();
+        }*/
+        
 
         //Other Items
         GUILayout.Label("Everything can't be automated.\nPlease follow these instructions", EditorStyles.boldLabel);
         GUILayout.Label("1. Set your avatar to humanoid\n" +
-                        "2. Configure Your avatar\n" +
-                        "3. Now add your VRC_Avatar_Descriptor and make your avatar");
+                        "2. Configure Your avatar\n"
+                        );
 
     }
     //~~~~Methods~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -155,7 +169,7 @@ public class Avatar_Setup : EditorWindow
     {
         //Load premade preset to avatar in "Assets/Yelby/Programs/Avatar Setup/ImportPreset.preset"
         string pSource = AssetDatabase.GetAssetPath(source);
-        Object nSource = AssetImporter.GetAtPath(pSource);
+        UnityEngine.Object nSource = AssetImporter.GetAtPath(pSource);
         var preset = AssetDatabase.LoadAssetAtPath<Preset>("Assets/Yelby/Programs/Avatar Setup/ImportPreset.preset");
         if (preset.CanBeAppliedTo(nSource))
         {
@@ -163,11 +177,7 @@ public class Avatar_Setup : EditorWindow
             Debug.Log("Preset Applied to " + source.name);
         }
 
-        //Scan through Avatar options to [Remove Toe Bones; Check if Chest is chest, spine is spine, hip is hip; Remove jaw bone]
-        /*Can't Automate*/
-
         //Export Materials to "Assets/Avatars/ <avatar name> / UMats"
-
         string destinationPath = ("Assets/Avatars/" + myString + "/" + "UMats/");
         ExtractMaterials(pSource, destinationPath);
         preset.UpdateProperties(nSource);
@@ -207,16 +217,15 @@ public class Avatar_Setup : EditorWindow
             //Save scene
             EditorSceneManager.SaveScene(newScene, destinationPath, false);
         }
-        Debug.LogError("Scene Done");
+        Debug.Log("Scene Done");
     }
 
     void addDescriptor()
     {
         //Add avatar Descriptor to avatar
-        /*No Idea*/
-        
-        //Change eye position to be between assigned eyebones in humanoid/avatar
-        /*Not Exactly - Finds eye position if it exists*/
+        doDescriptor();
+
+        //Generate Suggested Eye position based off bone location
         avatar = GameObject.Find(myString + "/Armature/Hips/Spine/Chest/Neck/Head/Eye_L");
         if (avatar == true)
         {
@@ -229,18 +238,10 @@ public class Avatar_Setup : EditorWindow
         }
         else
         {
-            Debug.Log("Eye Bone Doesn't Exist [/Armature/Hips/Spine/Chest/Neck/Head/Eye_L]");
+            Debug.LogWarning("Eye Bone Doesn't Exist [/Armature/Hips/Spine/Chest/Neck/Head/Eye_L]");
         }
 
-        //Delete Trash
-        avatar = GameObject.Find(myString);
-        DestroyImmediate(avatar);
-        Debug.Log("Avatar removed from Scene");
-
         EditorSceneManager.SaveScene(scene);
-
-        //Auto select "auto visemes" from descriptor
-        /*Can't do because can't add componenet*/
     }
 
     void generateFloor()
@@ -252,55 +253,65 @@ public class Avatar_Setup : EditorWindow
 
     void grabAnimations()
     {
-        if (av3)
+        if (pullAnims)
         {
-            string folder = "Assets/VRCSDK/Examples3/Animation/Controllers";
-            if (AssetDatabase.IsValidFolder(folder))
+            if (sdkV == "3")
             {
-                string[] original = { "vrc_AvatarV3LocomotionLayer" ,   //1
-                                  "vrc_AvatarV3IdleLayer" ,         //2
-                                  "vrc_AvatarV3HandsLayer2",        //3
-                                  "vrc_AvatarV3ActionLayer",        //4
-                                  "vrc_AvatarV3HandsLayer2",        //5
-                                  "vrc_AvatarV3SittingLayer"        //6
-                                };
+                string folder = "Assets/VRCSDK/Examples3/Animation/Controllers";
+                string[] original = {   "vrc_AvatarV3LocomotionLayer" ,   //1
+                                        "vrc_AvatarV3IdleLayer" ,         //2
+                                        "vrc_AvatarV3HandsLayer2",        //3
+                                        "vrc_AvatarV3ActionLayer",        //4
+                                        "vrc_AvatarV3HandsLayer2",        //5
+                                        "vrc_AvatarV3SittingLayer"        //6
+                                    };
                 string[] moved = {  "Base (Locomotion)" ,               //1
-                                "Additive (Not Active)" ,           //2
-                                "Gesture (Specific Movements",      //3
-                                "Action (Dances)",                  //4
-                                "FX (Everything that isn't bone)",  //5
-                                "Sitting"                           //6
+                                    "Additive (Not Active)" ,           //2
+                                    "Gesture (Specific Movements",      //3
+                                    "Action (Dances)",                  //4
+                                    "FX (Everything that isn't bone)",  //5
+                                    "Sitting"                           //6
                              };
                 for (int i = 0; i < original.Length; i++)
                 {
-                    AssetDatabase.CopyAsset("Assets/VRCSDK/Examples3/Animation/Controllers/" + original[i] + ".controller",
+                    AssetDatabase.CopyAsset(folder+"/" + original[i] + ".controller",
                                             "Assets/Avatars/" + myString + "/Animations/" + moved[i] + ".controller");
                 }
                 Debug.Log("SDK3 Animations Pulled");
             }
-            else
+            else if (sdkV == "2")
             {
-                Debug.LogWarning("Folder Does Not Exist SDK3");
-                return;
-            }
-
-        }
-        else
-        {
-            string folder = "Assets/VRChat Examples/Examples2/Animation/SDK2";
-            if (AssetDatabase.IsValidFolder(folder))
-            {
+                string folder = "Assets/VRChat Examples/Examples2/Animation/SDK2";
                 AssetDatabase.CopyAsset(folder + "/CustomOverrideEmpty.overrideController",
                                         "Assets/Avatars/" + myString + "/Animations/" + myString + ".overrideController");
+                AssetDatabase.CopyAsset(folder + "/CustomOverrideEmpty.overrideController",
+                                        "Assets/Avatars/" + myString + "/Animations/" + myString + "_sitting" + ".overrideController");
                 Debug.Log("SDK2 Animations Pulled");
             }
             else
             {
-                Debug.LogWarning("Folder Does Not Exist SDK2");
+                Debug.LogWarning("Folder Does Not Exist");
                 return;
             }
         }
+    }
 
+    void checkSDK()
+    {
+        var sdk3 = System.IO.File.Exists("Assets/VRCSDK/Plugins/VRCSDK3A.dll");
+        var sdk2 = System.IO.File.Exists("Assets/VRCSDK/Plugins/VRCSDK2.dll");
+        if (sdk3)
+        {
+            sdkV = "3";
+        }
+        else if (sdk2)
+        {
+            sdkV = "2";
+        }
+        else
+        {
+            Debug.LogError("SDK Missing");
+        }
     }
 
     void fromPrefab()
@@ -308,10 +319,34 @@ public class Avatar_Setup : EditorWindow
         //Add Prefab to Scene
         avatar = GameObject.Find(myString);
         PrefabUtility.SaveAsPrefabAssetAndConnect(avatar, "Assets/Avatars/" + myString + "/Prefabs/" + myString + ".prefab", InteractionMode.AutomatedAction);
-        Object temp = AssetDatabase.LoadAssetAtPath<Object>("Assets/Avatars/" + myString + "/Prefabs/" + myString + ".prefab");
-        PrefabUtility.InstantiatePrefab(temp);
+        //Object temp = AssetDatabase.LoadAssetAtPath<Object>("Assets/Avatars/" + myString + "/Prefabs/" + myString + ".prefab");
+        //PrefabUtility.InstantiatePrefab(temp);
         AssetDatabase.Refresh();
         Debug.LogWarning("Prefab Added");
+    }
+
+    void doDescriptor()
+    {
+        if (sdkV == "3")
+        {
+            DesAdd3 ad3 = new DesAdd3();
+            ad3.Desadd3(avatar);
+        }
+        else if (sdkV == "2")
+        {
+            DesAdd2 ad2 = new DesAdd2();
+            ad2.Desadd2(avatar);
+        }
+    }
+
+    void checkComps()
+    {
+        avatar = (GameObject)source;
+        Component[] components = avatar.GetComponents(typeof(Component));
+        foreach (Component component in components)
+        {
+            Debug.Log(component.ToString());
+        }
     }
 
     //~~~~Online Helpers~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
