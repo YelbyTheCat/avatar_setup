@@ -1,12 +1,17 @@
-﻿using UnityEngine;
+#define SDK3
+
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEditor;
 using UnityEditor.Presets;
 using UnityEditor.SceneManagement;
 using System.Collections.Generic;
 using System.Linq;
-using System.Collections;
-using System;
+#if SDK3
+using sdk = VRC.SDK3.Avatars.Components;
+#else
+using sdk = VRCSDK2;
+#endif
 using Object = UnityEngine.Object;
 
 public class Avatar_Setup : EditorWindow
@@ -14,7 +19,7 @@ public class Avatar_Setup : EditorWindow
     //Attributes
     string myString = "";
     string testString = "";
-    public UnityEngine.Object source;
+    public Object source;
     GameObject avatar;
     Scene scene;
     bool addFloor = true;
@@ -106,10 +111,7 @@ public class Avatar_Setup : EditorWindow
 
         }
         /*if(GUILayout.Button("Find Comps"))
-        {
-            checkComps();
-        }*/
-        
+            checkComps();*/
 
         //Other Items
         GUILayout.Label("Everything can't be automated.\nPlease follow these instructions", EditorStyles.boldLabel);
@@ -223,7 +225,7 @@ public class Avatar_Setup : EditorWindow
     void addDescriptor()
     {
         //Add avatar Descriptor to avatar
-        doDescriptor();
+        /*doDescriptor();*/
 
         //Generate Suggested Eye position based off bone location
         avatar = GameObject.Find(myString + "/Armature/Hips/Spine/Chest/Neck/Head/Eye_L");
@@ -240,6 +242,11 @@ public class Avatar_Setup : EditorWindow
         {
             Debug.LogWarning("Eye Bone Doesn't Exist [/Armature/Hips/Spine/Chest/Neck/Head/Eye_L]");
         }
+
+        //Delete Old
+        avatar = GameObject.Find(myString);
+        DestroyImmediate(avatar);
+        Debug.Log("Avatar removed from Scene");
 
         EditorSceneManager.SaveScene(scene);
     }
@@ -318,9 +325,10 @@ public class Avatar_Setup : EditorWindow
     {
         //Add Prefab to Scene
         avatar = GameObject.Find(myString);
+        doDescriptor();
         PrefabUtility.SaveAsPrefabAssetAndConnect(avatar, "Assets/Avatars/" + myString + "/Prefabs/" + myString + ".prefab", InteractionMode.AutomatedAction);
-        //Object temp = AssetDatabase.LoadAssetAtPath<Object>("Assets/Avatars/" + myString + "/Prefabs/" + myString + ".prefab");
-        //PrefabUtility.InstantiatePrefab(temp);
+        Object temp = AssetDatabase.LoadAssetAtPath<Object>("Assets/Avatars/" + myString + "/Prefabs/" + myString + ".prefab");
+        PrefabUtility.InstantiatePrefab(temp);
         AssetDatabase.Refresh();
         Debug.LogWarning("Prefab Added");
     }
@@ -329,13 +337,15 @@ public class Avatar_Setup : EditorWindow
     {
         if (sdkV == "3")
         {
-            DesAdd3 ad3 = new DesAdd3();
-            ad3.Desadd3(avatar);
+#if SDK3
+            avatar.AddComponent<sdk.VRCAvatarDescriptor>();
+#endif
         }
         else if (sdkV == "2")
         {
-            DesAdd2 ad2 = new DesAdd2();
-            ad2.Desadd2(avatar);
+#if SDK2
+            avatar.AddComponent<sdk.VRC_AvatarDescriptor>();
+#endif
         }
     }
 
