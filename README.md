@@ -1,6 +1,6 @@
 # avatar_setup
 - Creates Avatars Folder
-- Creates FBX, UMats, Textrues, Animations, FBX, Prefab Folders
+- Creates FBX, UMats, Textures, Animations, FBX, Prefab Folders
 - Extracts Materials
 - Setup Import Settings
 - Gives suggested eye position (Given specific bone path exists)
