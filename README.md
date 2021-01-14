@@ -7,7 +7,6 @@
 - Creates a scene with the character inside
 - Works on avatar 2.0 and 3.0
 - Adds Avatar Descriptor
-- Checks for SDK 2 or 3
 - And more!
 
 How to use: https://youtu.be/msgTbCpyVKk
