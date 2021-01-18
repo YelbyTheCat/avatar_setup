@@ -3,7 +3,7 @@
 - Creates FBX, UMats, Textures, Animations, FBX, Prefab Folders
 - Extracts Materials
 - Setup Import Settings
-- Gives suggested eye position (Given specific bone path exists)
+- Sets Eye-Location
 - Creates a scene with the character inside
 - Works on avatar 2.0 and 3.0
 - Adds Avatar Descriptor
