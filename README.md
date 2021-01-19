@@ -9,8 +9,6 @@
 - Adds Avatar Descriptor
 - And more!
 
-Hamborger
-
 How to use: https://youtu.be/msgTbCpyVKk
 
 PS: Make sure the SDK is in the file FIRST!
