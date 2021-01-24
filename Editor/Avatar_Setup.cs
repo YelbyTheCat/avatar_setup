@@ -17,7 +17,8 @@ public class Avatar_Setup : EditorWindow
     string avatarName = "";
     GameObject avatarModel;
     Scene scene;
-    
+    bool showPosition = false;
+
     [MenuItem("Yelby/Avatar Setup")]
     public static void ShowWindow()
     {
@@ -85,6 +86,20 @@ public class Avatar_Setup : EditorWindow
             }
         }
 
+        /*showPosition = EditorGUILayout.Foldout(showPosition, "Advanced");
+        if(showPosition)
+        {
+            if(GUILayout.Button("Generate All Folders"))
+                createAvatarFolders(avatarName);
+            if (GUILayout.Button("Move Avatar & Rename"))
+                moveAvatar(avatarModel, avatarName);
+            if (GUILayout.Button("Import Settings & Extract Materials"))
+            {
+                importSettingsFromPreset(avatarModel);
+                ExtractMaterials(AssetDatabase.GetAssetPath(avatarModel), "Assets/Avatars/" + avatarName + "/UMats/");
+            }
+        }*/
+
         /*if (GUILayout.Button("Check Comps"))
         {
             GameObject selection = Selection.activeGameObject;
@@ -121,6 +136,7 @@ public class Avatar_Setup : EditorWindow
         else
         {
             Debug.LogError("Invalid Location");
+            EditorUtility.DisplayDialog("Avatar Failed", "Folder Location Invalid", "Ok");
         }
         AssetDatabase.Refresh();
     }
@@ -135,6 +151,7 @@ public class Avatar_Setup : EditorWindow
         else
         {
             Debug.LogError("Can't Apply Preset");
+            EditorUtility.DisplayDialog("Avatar Failed", "Avatar Invalid", "Ok");
         }
     }
     void createScene(GameObject avatarModel, string avatarName)
@@ -200,7 +217,9 @@ public class Avatar_Setup : EditorWindow
             "vrc_AvatarV3HandsLayer2",      //FX
             "vrc_AvatarV3SittingLayer",     //Sitting
             "vrc_AvatarV3UtilityTPose",     //TPose
-            "vrc_AvatarV3UtilityIKPose"     //IK Pose
+            "vrc_AvatarV3UtilityIKPose",    //IK Pose
+            "vrc_AvatarV3IdleLayer",        //Additive
+            "vrc_AvatarV3HandsLayer",       //Gesture
         };
         string[] movedController =
         {
@@ -209,7 +228,9 @@ public class Avatar_Setup : EditorWindow
             "FX (Blends and Effects Only)", //FX
             "Sitting",                      //Sitting
             "TPose",                        //TPose
-            "IKPose"                        //IK Pose
+            "IKPose",                       //IK Pose
+            "Additive (Original + this",    //Additive
+            "Gesture (Specific Movements"   //Gesture
         };
         for(int i = 0;i<originalController.Length;i++)
         {
