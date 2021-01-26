@@ -17,7 +17,12 @@ public class Avatar_Setup : EditorWindow
     string avatarName = "";
     GameObject avatarModel;
     Scene scene;
+    //Advanced
     bool showPosition = false;
+    bool pullVRCAnimationControllers = true;
+    bool addFloor = true;
+    bool addToActiveScene = false;
+    bool overrideAvatarToggle = false;
 
     [MenuItem("Yelby/Avatar Setup")]
     public static void ShowWindow()
@@ -28,6 +33,7 @@ public class Avatar_Setup : EditorWindow
     void OnGUI()
     {
         //General Information
+        GUILayout.Label("Version: 2.4");
         GUILayout.Label("Instructions"
                    + "\n 1) Name Avatar"
                    + "\n 2) Click or Drag FBX into box"
@@ -50,31 +56,47 @@ public class Avatar_Setup : EditorWindow
         }
         EditorGUILayout.EndHorizontal();
 
+        //Advanced
+        showPosition = EditorGUILayout.Foldout(showPosition, "Advanced");
+        if(showPosition)
+        {
+            EditorGUIUtility.labelWidth = 120;
+            addFloor = EditorGUILayout.Toggle("Add Floor", addFloor);
+            pullVRCAnimationControllers = EditorGUILayout.Toggle("Copy Controllers", pullVRCAnimationControllers);
+            addToActiveScene = EditorGUILayout.Toggle("Active Scene", addToActiveScene);
+            overrideAvatarToggle = EditorGUILayout.Toggle("Override", overrideAvatarToggle);
+        }
+
+        //Big setup button
         if (GUILayout.Button("Setup Avatar"))
         {
-            if (avatarName == "")//Check if name is blank
+            if(overrideAvatarToggle != true)
             {
-                Debug.LogWarning("No Name");
-                EditorUtility.DisplayDialog("Avatar Failed", "Name Field is empty!", "Ok");
-                return;
+                if (avatarName == "")//Check if name is blank
+                {
+                    Debug.LogWarning("No Name");
+                    EditorUtility.DisplayDialog("Avatar Failed", "Name Field is empty!", "Ok");
+                    return;
+                }
+                else if (AssetDatabase.IsValidFolder("Assets/Avatars/" + avatarName) == true)//Check if name is taken
+                {
+                    Debug.LogWarning("Name Taken");
+                    EditorUtility.DisplayDialog("Avatar Failed", "Name Taken!", "Ok");
+                    return;
+                }
             }
-            else if(AssetDatabase.IsValidFolder("Assets/Avatars/" + avatarName) == true)//Check if name is taken
-            {
-                Debug.LogWarning("Name Taken");
-                EditorUtility.DisplayDialog("Avatar Failed", "Name Taken!", "Ok");
-                return;
-            }
+            
             if(!avatarModel == false)//If there is a model it'll run
             {
+                if(overrideAvatarToggle) {overrideAvatar(avatarName);}
                 createAvatarFolders(avatarName);
                 moveAvatar(avatarModel, avatarName);
                 importSettingsFromPreset(avatarModel);
                 ExtractMaterials(AssetDatabase.GetAssetPath(avatarModel), "Assets/Avatars/" + avatarName + "/UMats/");
                 createScene(avatarModel, avatarName);
                 createAvatarPrefab(avatarModel, avatarName);
-                pullVRCAnimations(avatarName);
-                //createSuggestedEyeLocation(avatarName);
-                createFloor();
+                if (pullVRCAnimationControllers) { pullVRCAnimations(avatarName); }
+                if (addFloor) { createFloor(); }
                 Debug.Log("Avatar Setup Finished");
                 EditorUtility.DisplayDialog("Avatar Success", "Model Imported\nCheck Assets/Avatars/"+avatarName, "Ok");
             }
@@ -85,20 +107,6 @@ public class Avatar_Setup : EditorWindow
                 return;
             }
         }
-
-        /*showPosition = EditorGUILayout.Foldout(showPosition, "Advanced");
-        if(showPosition)
-        {
-            if(GUILayout.Button("Generate All Folders"))
-                createAvatarFolders(avatarName);
-            if (GUILayout.Button("Move Avatar & Rename"))
-                moveAvatar(avatarModel, avatarName);
-            if (GUILayout.Button("Import Settings & Extract Materials"))
-            {
-                importSettingsFromPreset(avatarModel);
-                ExtractMaterials(AssetDatabase.GetAssetPath(avatarModel), "Assets/Avatars/" + avatarName + "/UMats/");
-            }
-        }*/
 
         /*if (GUILayout.Button("Check Comps"))
         {
@@ -157,7 +165,12 @@ public class Avatar_Setup : EditorWindow
     void createScene(GameObject avatarModel, string avatarName)
     {
         scene = SceneManager.GetActiveScene();
-        if (scene.name == "" || scene.name == "SampleScene")
+        if(addToActiveScene)
+        {
+            addCharacter(avatarModel);
+            EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
+        }
+        else if (scene.name == "" || scene.name == "SampleScene")
         {
             addCharacter(avatarModel);
             EditorSceneManager.SaveScene(scene, "Assets/Avatars/"+avatarName+"/"+avatarName+".unity", false);
@@ -176,8 +189,9 @@ public class Avatar_Setup : EditorWindow
             var avatarDescriptor = prefab.AddComponent<VRC.SDK3.Avatars.Components.VRCAvatarDescriptor>();
             var eyePosition = createSuggestedEyeLocation(avatarName);
             avatarDescriptor.ViewPosition = eyePosition;
+
             avatarDescriptor.lipSync = VRC.SDKBase.VRC_AvatarDescriptor.LipSyncStyle.VisemeBlendShape;
-            Dictionary<string, GameObject> unpackedBones = UnpackBones(avatarModel, new Dictionary<string, GameObject>());
+            Dictionary<string, GameObject> unpackedBones = UnpackBones(prefab, new Dictionary<string, GameObject>());
             if(unpackedBones.ContainsKey("Body"))
             {
                 var skinMesh = unpackedBones["Body"].GetComponent<SkinnedMeshRenderer>();
@@ -274,6 +288,10 @@ public class Avatar_Setup : EditorWindow
             Debug.Log(component.ToString());
         }
     }*/
+    void overrideAvatar(string avatarName)
+    {
+        AssetDatabase.DeleteAsset("Assets/Avatars/" + avatarName);
+    }
     //~~~~Helper Methods~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     void CreateSubAvatarFolders(string[] subN, string avatarName)
     {
