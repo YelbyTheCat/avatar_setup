@@ -22,6 +22,7 @@ public class Avatar_Setup : EditorWindow
     bool pullVRCAnimationControllers = true;
     bool addFloor = true;
     bool addToActiveScene = false;
+    bool pullTextures = true;
     bool overrideAvatarToggle = false;
 
     [MenuItem("Yelby/Avatar Setup")]
@@ -33,7 +34,7 @@ public class Avatar_Setup : EditorWindow
     void OnGUI()
     {
         //General Information
-        GUILayout.Label("Version: 2.4");
+        GUILayout.Label("Version: 2.5");
         GUILayout.Label("Instructions"
                    + "\n 1) Name Avatar"
                    + "\n 2) Click or Drag FBX into box"
@@ -64,6 +65,7 @@ public class Avatar_Setup : EditorWindow
             addFloor = EditorGUILayout.Toggle("Add Floor", addFloor);
             pullVRCAnimationControllers = EditorGUILayout.Toggle("Copy Controllers", pullVRCAnimationControllers);
             addToActiveScene = EditorGUILayout.Toggle("Active Scene", addToActiveScene);
+            pullTextures = EditorGUILayout.Toggle("Pull Textures", pullTextures);
             overrideAvatarToggle = EditorGUILayout.Toggle("Override", overrideAvatarToggle);
         }
 
@@ -88,10 +90,11 @@ public class Avatar_Setup : EditorWindow
             
             if(!avatarModel == false)//If there is a model it'll run
             {
-                if(overrideAvatarToggle) {overrideAvatar(avatarName);}
+                if (overrideAvatarToggle) {overrideAvatar(avatarName);}
                 createAvatarFolders(avatarName);
                 moveAvatar(avatarModel, avatarName);
                 importSettingsFromPreset(avatarModel);
+                if (pullTextures) { ExtractTextures(avatarName); }
                 ExtractMaterials(AssetDatabase.GetAssetPath(avatarModel), "Assets/Avatars/" + avatarName + "/UMats/");
                 createScene(avatarModel, avatarName);
                 createAvatarPrefab(avatarModel, avatarName);
@@ -279,6 +282,11 @@ public class Avatar_Setup : EditorWindow
         GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
         floor.name = "Floor";
         EditorSceneManager.SaveScene(scene);
+    }
+    void ExtractTextures(string avatarName)
+    {
+        var tex = AssetImporter.GetAtPath("Assets/Avatars/" + avatarName + "/FBX/" + avatarName + ".fbx") as ModelImporter;
+        tex.ExtractTextures("Assets/Avatars/" + avatarName + "/Textures/");
     }
     /*void checkComps(GameObject avM)
     {
