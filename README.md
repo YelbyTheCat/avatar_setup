@@ -12,5 +12,3 @@
 How to use: https://youtu.be/msgTbCpyVKk
 
 PS: Make sure the SDK is in the file FIRST!
-
-Discord: https://discord.gg/Xgn8zK3zb7
